@@ -1,0 +1,16 @@
+{
+  "name": "@cab/booking-service",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev":   "node --watch src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@cab/shared": "*",
+    "dotenv":      "^16.4.5",
+    "express":     "^4.21.0"
+  }
+}

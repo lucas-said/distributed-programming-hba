@@ -1,0 +1,21 @@
+{
+  "name": "cab-booking-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Distributed cab booking platform built with microservices and event-driven architecture",
+  "workspaces": [
+    "shared",
+    "services/*",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:customer": "npm run dev -w services/customer",
+    "dev:booking": "npm run dev -w services/booking",
+    "dev:payment": "npm run dev -w services/payment",
+    "dev:fare": "npm run dev -w services/fare",
+    "dev:location": "npm run dev -w services/location"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
