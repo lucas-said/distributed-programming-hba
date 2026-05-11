@@ -10,3 +10,8 @@ export {
   EXCHANGE,
 } from './rabbitmq.js';
 export { logger } from './logger.js';
+export {
+  signToken,
+  verifyToken,
+  authMiddleware,
+} from './auth.js';
