@@ -14,7 +14,12 @@
     "dev:payment": "npm run dev -w services/payment",
     "dev:fare": "npm run dev -w services/fare",
     "dev:location": "npm run dev -w services/location",
-    "dev:events": "npm run dev -w services/events"
+    "dev:events": "npm run dev -w services/events",
+    "dev:gateway": "npm run dev -w services/gateway",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build:frontend": "npm --prefix frontend run build",
+    "dev:frontend": "npm run dev -w frontend",
+    "build:frontend": "npm run build -w frontend"
   },
   "engines": {
     "node": ">=20.0.0"
