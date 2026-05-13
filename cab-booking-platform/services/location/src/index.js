@@ -1,36 +1,56 @@
 import 'dotenv/config';
 import express from 'express';
-import { connectDB, connectRabbit, logger } from '@cab/shared';
+import cors    from 'cors';
 
-const app = express();
-app.use(express.json());
+import { connectDB, authMiddleware, logger } from '@cab/shared';
+import favouriteRoutes                       from './routes/favourites.js';
 
 const SERVICE_NAME = 'location';
-const PORT = process.env.PORT || 4005;
+const PORT         = process.env.PORT || 4005;
 
-// Health check used by the API gateway and hosting platform
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// Health check (no auth)
 app.get('/health', (req, res) => {
-  res.json({
-    service: SERVICE_NAME,
-    status:  'ok',
-    time:    new Date().toISOString(),
-  });
+  res.json({ service: SERVICE_NAME, status: 'ok', time: new Date().toISOString() });
 });
 
+// All other routes require a valid JWT.
+const requireAuth = authMiddleware(process.env.JWT_SECRET);
+app.use('/', requireAuth, favouriteRoutes);
+
+// ---- Error handler ---------------------------------------------------
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, _next) => {
+  if (err?.name === 'ValidationError') {
+    return res.status(400).json({
+      error:   'Validation failed',
+      details: Object.values(err.errors).map((e) => e.message),
+    });
+  }
+  if (err?.code === 11000) {
+    return res.status(409).json({ error: 'Duplicate value' });
+  }
+  logger.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
+// ---- Startup ---------------------------------------------------------
 async function start() {
   try {
-    if (process.env.MONGODB_URI) {
-      await connectDB(process.env.MONGODB_URI, process.env.MONGODB_DBNAME);
-    } else {
-      logger.warn('MONGODB_URI not set - skipping DB connection (ok for dev)');
+    if (!process.env.JWT_SECRET) {
+      logger.error('JWT_SECRET is required.');
+      process.exit(1);
+    }
+    if (!process.env.RAPIDAPI_KEY) {
+      logger.warn('RAPIDAPI_KEY not set - weather lookups will fail with 503');
     }
 
-    if (process.env.RABBITMQ_URL) {
-      await connectRabbit(process.env.RABBITMQ_URL);
-    } else {
-      logger.warn('RABBITMQ_URL not set - skipping broker connection (ok for dev)');
-    }
+    await connectDB(process.env.MONGODB_URI, process.env.MONGODB_DBNAME);
 
+    // No broker connection - this service is stateless on the event side.
     app.listen(PORT, () => logger.info(`${SERVICE_NAME} service listening on :${PORT}`));
   } catch (err) {
     logger.error(`${SERVICE_NAME} failed to start:`, err.message);

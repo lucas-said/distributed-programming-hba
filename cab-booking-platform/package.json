@@ -13,7 +13,8 @@
     "dev:booking": "npm run dev -w services/booking",
     "dev:payment": "npm run dev -w services/payment",
     "dev:fare": "npm run dev -w services/fare",
-    "dev:location": "npm run dev -w services/location"
+    "dev:location": "npm run dev -w services/location",
+    "dev:events": "npm run dev -w services/events"
   },
   "engines": {
     "node": ">=20.0.0"

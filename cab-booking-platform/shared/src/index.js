@@ -15,3 +15,4 @@ export {
   verifyToken,
   authMiddleware,
 } from './auth.js';
+export { asyncHandler } from './asyncHandler.js';

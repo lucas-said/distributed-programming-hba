@@ -1,5 +1,5 @@
 {
-  "name": "@cab/location-service",
+  "name": "@cab/events-service",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@cab/shared": "*",
-    "cors":        "^2.8.5",
     "dotenv":      "^16.4.5",
     "express":     "^4.21.0"
   }

@@ -1,40 +1,44 @@
 import 'dotenv/config';
 import express from 'express';
-import { connectDB, connectRabbit, logger } from '@cab/shared';
+import cors    from 'cors';
 
-const app = express();
-app.use(express.json());
+import { authMiddleware, logger } from '@cab/shared';
+import fareRoutes                  from './routes/fare.js';
 
 const SERVICE_NAME = 'fare';
-const PORT = process.env.PORT || 4004;
+const PORT         = process.env.PORT || 4004;
 
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// Health check (no auth)
 app.get('/health', (req, res) => {
-  res.json({
-    service: SERVICE_NAME,
-    status:  'ok',
-    time:    new Date().toISOString(),
-  });
+  res.json({ service: SERVICE_NAME, status: 'ok', time: new Date().toISOString() });
 });
 
+// All fare endpoints require a valid JWT.
+const requireAuth = authMiddleware(process.env.JWT_SECRET);
+app.use('/', requireAuth, fareRoutes);
+
+// ---- Error handler ---------------------------------------------------
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, _next) => {
+  logger.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
+// ---- Startup ---------------------------------------------------------
 async function start() {
-  try {
-    if (process.env.MONGODB_URI) {
-      await connectDB(process.env.MONGODB_URI, process.env.MONGODB_DBNAME);
-    } else {
-      logger.warn('MONGODB_URI not set - skipping DB connection (ok for dev)');
-    }
-
-    if (process.env.RABBITMQ_URL) {
-      await connectRabbit(process.env.RABBITMQ_URL);
-    } else {
-      logger.warn('RABBITMQ_URL not set - skipping broker connection (ok for dev)');
-    }
-
-    app.listen(PORT, () => logger.info(`${SERVICE_NAME} service listening on :${PORT}`));
-  } catch (err) {
-    logger.error(`${SERVICE_NAME} failed to start:`, err.message);
+  if (!process.env.JWT_SECRET) {
+    logger.error('JWT_SECRET is required.');
     process.exit(1);
   }
+  if (!process.env.RAPIDAPI_KEY) {
+    logger.warn('RAPIDAPI_KEY not set - fare requests will fail with 503');
+  }
+  // No DB, no broker - this service is stateless.
+  app.listen(PORT, () => logger.info(`${SERVICE_NAME} service listening on :${PORT}`));
 }
 
 start();

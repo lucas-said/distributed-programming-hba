@@ -1,33 +1,64 @@
 import 'dotenv/config';
 import express from 'express';
-import { connectDB, connectRabbit, logger } from '@cab/shared';
+import cors    from 'cors';
 
-const app = express();
-app.use(express.json());
+import {
+  connectDB,
+  connectRabbit,
+  authMiddleware,
+  logger,
+} from '@cab/shared';
+
+import bookingRoutes            from './routes/bookings.js';
+import { startPaymentConsumer } from './events/paymentConsumer.js';
 
 const SERVICE_NAME = 'booking';
-const PORT = process.env.PORT || 4002;
+const PORT         = process.env.PORT || 4002;
 
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// Health check (no auth)
 app.get('/health', (req, res) => {
-  res.json({
-    service: SERVICE_NAME,
-    status:  'ok',
-    time:    new Date().toISOString(),
-  });
+  res.json({ service: SERVICE_NAME, status: 'ok', time: new Date().toISOString() });
 });
 
+// All booking routes require a valid JWT.
+const requireAuth = authMiddleware(process.env.JWT_SECRET);
+app.use('/', requireAuth, bookingRoutes);
+
+// ---- Error handler ---------------------------------------------------
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, _next) => {
+  if (err?.name === 'ValidationError') {
+    return res.status(400).json({
+      error:   'Validation failed',
+      details: Object.values(err.errors).map((e) => e.message),
+    });
+  }
+  if (err?.name === 'CastError') {
+    return res.status(400).json({ error: `Invalid ${err.path}` });
+  }
+  logger.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
+// ---- Startup ---------------------------------------------------------
 async function start() {
   try {
-    if (process.env.MONGODB_URI) {
-      await connectDB(process.env.MONGODB_URI, process.env.MONGODB_DBNAME);
-    } else {
-      logger.warn('MONGODB_URI not set - skipping DB connection (ok for dev)');
+    if (!process.env.JWT_SECRET) {
+      logger.error('JWT_SECRET is required.');
+      process.exit(1);
     }
+
+    await connectDB(process.env.MONGODB_URI, process.env.MONGODB_DBNAME);
 
     if (process.env.RABBITMQ_URL) {
       await connectRabbit(process.env.RABBITMQ_URL);
+      await startPaymentConsumer();
     } else {
-      logger.warn('RABBITMQ_URL not set - skipping broker connection (ok for dev)');
+      logger.warn('RABBITMQ_URL not set - bookings will save but no events will be published or consumed');
     }
 
     app.listen(PORT, () => logger.info(`${SERVICE_NAME} service listening on :${PORT}`));
