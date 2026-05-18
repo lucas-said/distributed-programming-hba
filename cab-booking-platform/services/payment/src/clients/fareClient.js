@@ -1,15 +1,5 @@
 import { logger } from '@cab/shared';
 
-/**
- * Get a fare estimate by calling the Fare service.
- * Forwards the user's JWT.
- *
- * @param {object} params
- * @param {{latitude:number,longitude:number}} params.pickup
- * @param {{latitude:number,longitude:number}} params.dropoff
- * @param {string} bearerToken
- * @returns {Promise<{fare:number, currency:string}>}
- */
 export async function getFareEstimate({ pickup, dropoff }, bearerToken) {
   const baseUrl = process.env.FARE_SERVICE_URL;
   if (!baseUrl) throw new Error('FARE_SERVICE_URL is not set');

@@ -1,13 +1,5 @@
 import mongoose from 'mongoose';
 
-/**
- * Payment record.
- *
- * The breakdown is persisted alongside the total so the audit trail
- * (Task 3) shows *exactly* how the price was computed - useful for
- * debugging customer disputes and demonstrating the formula in the demo.
- */
-
 const BreakdownSubschema = new mongoose.Schema(
   {
     cab_fare:              { type: Number, required: true },

@@ -6,12 +6,6 @@ import { Booking, CAB_TYPES }                             from '../models/Bookin
 
 const router = express.Router();
 
-// ---- Validation -------------------------------------------------------
-
-/**
- * Validate a "location" payload. Returns either { ok: true, value } or
- * { ok: false, errors }. Used for both startingLocation and endingLocation.
- */
 function validateLocation(label, raw) {
   const errors = [];
   if (!raw || typeof raw !== 'object') {
@@ -69,17 +63,6 @@ function validateBookingBody(body) {
   };
 }
 
-// ---- Routes -----------------------------------------------------------
-
-/**
- * POST /
- * Create a new booking. Auth required.
- *
- * On success:
- *   1. Persists the booking with status="pending".
- *   2. Publishes a "booking.created" event with full booking details.
- *      This is the event the cab-ready handler (Task 6, Step 7) listens to.
- */
 router.post(
   '/',
   asyncHandler(async (req, res) => {
@@ -116,13 +99,6 @@ router.post(
   })
 );
 
-/**
- * GET /current
- * List bookings whose dateTime is in the future. Auth required.
- *
- * "Current" = trips not yet taken, regardless of payment status.
- * Sorted ascending so the next ride is first.
- */
 router.get(
   '/current',
   asyncHandler(async (req, res) => {
@@ -135,11 +111,6 @@ router.get(
   })
 );
 
-/**
- * GET /past
- * List bookings whose dateTime has already passed. Auth required.
- * Sorted descending so the most recent past trip is first.
- */
 router.get(
   '/past',
   asyncHandler(async (req, res) => {
@@ -152,12 +123,6 @@ router.get(
   })
 );
 
-/**
- * GET /:id
- * Fetch a single booking by id. Auth required.
- * Returns 404 if the booking belongs to a different user, so we don't
- * leak the existence of other users' bookings.
- */
 router.get(
   '/:id',
   asyncHandler(async (req, res) => {

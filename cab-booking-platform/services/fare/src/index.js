@@ -9,7 +9,9 @@ const SERVICE_NAME = 'fare';
 const PORT         = process.env.PORT || 4004;
 
 const app = express();
+
 app.use(cors());
+
 app.use(express.json());
 
 // Health check (no auth)
@@ -19,16 +21,14 @@ app.get('/health', (req, res) => {
 
 // All fare endpoints require a valid JWT.
 const requireAuth = authMiddleware(process.env.JWT_SECRET);
-app.use('/', requireAuth, fareRoutes);
 
-// ---- Error handler ---------------------------------------------------
+app.use('/', requireAuth, fareRoutes);
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, _next) => {
   logger.error('Unhandled error:', err);
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// ---- Startup ---------------------------------------------------------
 async function start() {
   if (!process.env.JWT_SECRET) {
     logger.error('JWT_SECRET is required.');

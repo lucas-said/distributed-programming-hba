@@ -5,33 +5,7 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 
 import { logger } from '@cab/shared';
 
-/**
- * API Gateway (Task 7).
- *
- * Single entry point for the Web application. The frontend talks ONLY to
- * the gateway, never to the individual microservices directly. The
- * gateway maps URL prefixes to backend services and forwards the request
- * (with headers and body intact) to the matching backend.
- *
- * URL scheme:
- *   /customer/...   -> customer service
- *   /booking/...    -> booking service
- *   /payment/...    -> payment service
- *   /fare/...       -> fare service
- *   /location/...   -> location service
- *
- * The prefix is stripped before forwarding, so e.g.
- *   GET /customer/users/me  ->  GET /users/me  on the customer service.
- *
- * Why no auth middleware here?
- *   Each microservice already verifies the JWT itself. Re-doing it here
- *   would mean every request goes through two verification passes for no
- *   gain. We just forward the Authorization header.
- */
-
 const PORT = process.env.PORT || 4000;
-
-// ---- Routing table ---------------------------------------------------
 // One entry per backend. The order matters: more specific prefixes first.
 const ROUTES = [
   { prefix: '/customer', target: process.env.CUSTOMER_SERVICE_URL || 'http://localhost:4001' },
@@ -44,8 +18,9 @@ const ROUTES = [
 const app = express();
 
 app.use(cors({
-  origin:      process.env.CORS_ORIGIN || '*',
-  credentials: true,
+  // Bearer-token auth — no cookies — so credentials:false is correct.
+  // This means CORS_ORIGIN=* is valid for dev and a specific origin works in production.
+  origin: process.env.CORS_ORIGIN || '*',
 }));
 
 // Tiny request logger so the demo video can show traffic flowing
@@ -67,8 +42,6 @@ app.get('/health', (req, res) => {
     upstream: ROUTES.map((r) => ({ prefix: r.prefix, target: r.target })),
   });
 });
-
-// ---- Mount one proxy per backend ------------------------------------
 for (const { prefix, target } of ROUTES) {
   app.use(
     prefix,

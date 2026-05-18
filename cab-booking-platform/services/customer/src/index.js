@@ -3,6 +3,7 @@ import express from 'express';
 import cors    from 'cors';
 
 import {
+
   connectDB,
   connectRabbit,
   authMiddleware,
@@ -18,10 +19,10 @@ const SERVICE_NAME = 'customer';
 const PORT         = process.env.PORT || 4001;
 
 const app = express();
-app.use(cors());                  // safe default while we develop
-app.use(express.json());
 
-// ---- Routes -----------------------------------------------------------
+app.use(cors());
+
+app.use(express.json());
 
 // Health check (no auth) - used by gateway and hosting platform.
 app.get('/health', (req, res) => {
@@ -33,10 +34,10 @@ app.use('/auth', authRoutes);
 
 // Everything below requires a valid JWT.
 const requireAuth = authMiddleware(process.env.JWT_SECRET);
-app.use('/users',         requireAuth, userRoutes);
-app.use('/notifications', requireAuth, notificationRoutes);
 
-// ---- Error middleware -------------------------------------------------
+app.use('/users',         requireAuth, userRoutes);
+
+app.use('/notifications', requireAuth, notificationRoutes);
 
 // Mongoose validation errors -> 400, anything else -> 500.
 // Placed AFTER routes so it catches errors forwarded by asyncHandler.
@@ -54,8 +55,6 @@ app.use((err, req, res, _next) => {
   logger.error('Unhandled error:', err);
   res.status(500).json({ error: 'Internal server error' });
 });
-
-// ---- Startup ----------------------------------------------------------
 
 async function start() {
   try {

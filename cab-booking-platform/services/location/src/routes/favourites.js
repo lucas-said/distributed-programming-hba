@@ -7,8 +7,6 @@ import { getWeather, WeatherApiError } from '../clients/weatherApi.js';
 
 const router = express.Router();
 
-// ---- Validation -----------------------------------------------------
-
 function validateFavouriteBody(body, { partial = false } = {}) {
   const errors = [];
   const out = {};
@@ -50,12 +48,6 @@ function validateFavouriteBody(body, { partial = false } = {}) {
   return { errors, values: out };
 }
 
-// ---- CRUD routes -----------------------------------------------------
-
-/**
- * GET /
- * List the authenticated user's favourite locations, oldest first.
- */
 router.get(
   '/',
   asyncHandler(async (req, res) => {
@@ -67,11 +59,6 @@ router.get(
   })
 );
 
-/**
- * POST /
- * Create a new favourite location.
- * Body: { name, address?, latitude, longitude }
- */
 router.post(
   '/',
   asyncHandler(async (req, res) => {
@@ -93,10 +80,6 @@ router.post(
   })
 );
 
-/**
- * PUT /:id
- * Update a favourite. All fields are optional - we patch.
- */
 router.put(
   '/:id',
   asyncHandler(async (req, res) => {
@@ -126,10 +109,6 @@ router.put(
   })
 );
 
-/**
- * DELETE /:id
- * Remove a favourite.
- */
 router.delete(
   '/:id',
   asyncHandler(async (req, res) => {
@@ -143,11 +122,6 @@ router.delete(
   })
 );
 
-/**
- * GET /:id/weather
- * Fetch the current weather + 1-day forecast for one of the user's
- * favourite locations.
- */
 router.get(
   '/:id/weather',
   asyncHandler(async (req, res) => {

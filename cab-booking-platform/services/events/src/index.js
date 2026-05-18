@@ -5,6 +5,7 @@ import { connectDB, connectRabbit, logger } from '@cab/shared';
 
 import { startDiscountHandler }     from './handlers/discountHandler.js';
 import {
+
   setupCabReadyQueues,
   startCabReadyScheduler,
 } from './handlers/cabReadyHandler.js';
@@ -15,6 +16,7 @@ const PORT         = process.env.PORT || 4006;
 // We expose only a /health endpoint - this service is a worker, not an
 // API. The gateway never routes user traffic here.
 const app = express();
+
 app.get('/health', (req, res) => {
   res.json({ service: SERVICE_NAME, status: 'ok', time: new Date().toISOString() });
 });
@@ -28,8 +30,6 @@ async function start() {
       process.exit(1);
     }
     await connectRabbit(process.env.RABBITMQ_URL);
-
-    // ---- Wire up the two event-driven workflows ---------------------
     const ttlMs = Number(process.env.CAB_READY_DELAY_MS) || 180_000;
     await setupCabReadyQueues(ttlMs);
     await startCabReadyScheduler();

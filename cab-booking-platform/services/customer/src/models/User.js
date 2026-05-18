@@ -1,18 +1,5 @@
 import mongoose from 'mongoose';
 
-/**
- * User account.
- *
- * Notes:
- *   - The password is stored as a bcrypt hash in `passwordHash`. We never
- *     store the plain password.
- *   - Email is the natural login identifier so it must be unique. We
- *     lowercase + trim it on save to avoid duplicate accounts that differ
- *     only in case ("alice@x.com" vs "Alice@X.com").
- *   - The `toJSON` transform strips passwordHash and _id from any response,
- *     so we can safely `res.json(user)` without leaking secrets.
- */
-
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const UserSchema = new mongoose.Schema(

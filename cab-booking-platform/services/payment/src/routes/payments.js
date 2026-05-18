@@ -11,20 +11,6 @@ import { getFareEstimate} from '../clients/fareClient.js';
 
 const router = express.Router();
 
-/**
- * POST /pay
- * Auth required.
- * Body: { bookingId }
- *
- * Orchestrates:
- *   1. Fetch booking from Booking service (fails if not found / not user's)
- *   2. Reject if booking is already paid
- *   3. Fetch fare estimate from Fare service
- *   4. Look up user's discount status
- *   5. Apply pricing formula
- *   6. Persist Payment record (unique index on bookingId blocks double-pay)
- *   7. Publish payment.completed event so Booking service can flip status
- */
 router.post(
   '/pay',
   asyncHandler(async (req, res) => {
@@ -35,8 +21,6 @@ router.post(
 
     // Pull the raw "Bearer ..." header so we can forward it to other services.
     const bearerToken = req.headers.authorization;
-
-    // ---- Step 1: Booking lookup
     let booking;
     try {
       booking = await getBooking(bookingId, bearerToken);
@@ -44,8 +28,6 @@ router.post(
       return res.status(err.status || 502).json({ error: err.message });
     }
     if (!booking) return res.status(404).json({ error: 'Booking not found' });
-
-    // ---- Step 2: Already paid?
     const existing = await Payment.findOne({ bookingId });
     if (existing) {
       return res.status(409).json({
@@ -53,8 +35,6 @@ router.post(
         payment: existing,
       });
     }
-
-    // ---- Step 3: Fare estimate
     let estimate;
     try {
       estimate = await getFareEstimate({
@@ -64,12 +44,8 @@ router.post(
     } catch (err) {
       return res.status(err.status || 502).json({ error: err.message });
     }
-
-    // ---- Step 4: Discount lookup
     const userDiscount = await UserDiscount.findOne({ userId: req.user.sub });
     const discount     = userDiscount?.discount ?? 1;
-
-    // ---- Step 5: Apply formula
     let breakdown;
     try {
       breakdown = calculatePrice({
@@ -82,8 +58,6 @@ router.post(
     } catch (err) {
       return res.status(400).json({ error: err.message });
     }
-
-    // ---- Step 6: Persist
     let payment;
     try {
       payment = await Payment.create({
@@ -101,8 +75,6 @@ router.post(
       }
       throw err;
     }
-
-    // ---- Step 7: Publish event
     if (getChannel()) {
       publishEvent('payment.completed', {
         paymentId: payment.id,
@@ -121,10 +93,6 @@ router.post(
   })
 );
 
-/**
- * GET /
- * List the authenticated user's payments, newest first.
- */
 router.get(
   '/',
   asyncHandler(async (req, res) => {
@@ -136,10 +104,6 @@ router.get(
   })
 );
 
-/**
- * GET /:id
- * Fetch a single payment.
- */
 router.get(
   '/:id',
   asyncHandler(async (req, res) => {

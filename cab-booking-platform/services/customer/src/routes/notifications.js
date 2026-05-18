@@ -4,18 +4,8 @@ import mongoose from 'mongoose';
 import { asyncHandler } from '@cab/shared';
 import { Notification } from '../models/Notification.js';
 
-
 const router = express.Router();
 
-/**
- * GET /notifications
- * Auth required.
- * Returns the authenticated user's notifications, newest first.
- *
- * Query params:
- *   - unread=true : returns only unread notifications
- *   - limit=N     : caps results (default 50, max 200)
- */
 router.get(
   '/',
   asyncHandler(async (req, res) => {
@@ -35,12 +25,6 @@ router.get(
   })
 );
 
-/**
- * PATCH /notifications/:id/read
- * Auth required.
- * Marks one notification as read. The notification must belong to the
- * authenticated user.
- */
 router.patch(
   '/:id/read',
   asyncHandler(async (req, res) => {

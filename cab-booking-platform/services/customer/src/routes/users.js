@@ -3,14 +3,8 @@ import express from 'express';
 import { asyncHandler } from '@cab/shared';
 import { User } from '../models/User.js';
 
-
 const router = express.Router();
 
-/**
- * GET /users/me
- * Auth required.
- * Returns the authenticated user's account details.
- */
 router.get(
   '/me',
   asyncHandler(async (req, res) => {

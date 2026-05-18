@@ -4,14 +4,8 @@ import { signToken, asyncHandler, logger } from '@cab/shared';
 
 import { User } from '../models/User.js';
 
-
 const router = express.Router();
 
-/**
- * Validate a registration request body and return either parsed values
- * or a list of error messages. Keeping validation inline so it's easy
- * to follow in the video walkthrough.
- */
 function validateRegister(body) {
   const errors = [];
   const firstName = (body.firstName ?? '').toString().trim();
@@ -29,11 +23,6 @@ function validateRegister(body) {
 
 const BCRYPT_ROUNDS = 10;
 
-/**
- * POST /auth/register
- * Body: { firstName, lastName, email, password }
- * Returns: { user, token }
- */
 router.post(
   '/register',
   asyncHandler(async (req, res) => {
@@ -60,11 +49,6 @@ router.post(
   })
 );
 
-/**
- * POST /auth/login
- * Body: { email, password }
- * Returns: { user, token }
- */
 router.post(
   '/login',
   asyncHandler(async (req, res) => {

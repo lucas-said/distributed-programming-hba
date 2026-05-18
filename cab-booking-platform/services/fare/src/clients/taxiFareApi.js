@@ -1,32 +1,7 @@
 import { logger } from '@cab/shared';
 
-/**
- * Client for the RapidAPI Taxi Fare Calculator.
- *
- * Upstream contract (https://rapidapi.com/3b-data-3b-data-default/api/taxi-fare-calculator):
- *   GET /
- *     query: dep_lat, dep_lng, arr_lat, arr_lng
- *     headers: X-RapidAPI-Key, X-RapidAPI-Host
- *
- *   200 response shape:
- *     {
- *       journey: { distance: number, duration: number, ... },
- *       fares:   [ { name: string, price_in_cents: number, currency: string } ]
- *     }
- *
- * We isolate all upstream knowledge in this file so:
- *   - Route handlers stay clean and easy to read.
- *   - If the upstream changes shape we only fix one place.
- *   - Tests can mock the *fetch* layer and verify our normalisation,
- *     OR mock this module entirely to cover edge cases.
- */
-
 const FETCH_TIMEOUT_MS = 10_000;
 
-/**
- * Custom error class so the route layer can react to upstream failures
- * with the right HTTP status code.
- */
 export class FareApiError extends Error {
   constructor(message, { status = 502, cause } = {}) {
     super(message);
@@ -36,12 +11,6 @@ export class FareApiError extends Error {
   }
 }
 
-/**
- * Call the upstream API and return its raw JSON.
- *
- * @param {object} coords - { dep_lat, dep_lng, arr_lat, arr_lng }
- * @returns {Promise<object>} raw upstream JSON
- */
 async function callUpstream({ dep_lat, dep_lng, arr_lat, arr_lng }) {
   const baseUrl = process.env.TAXI_FARE_API_URL;
   const apiHost = process.env.TAXI_FARE_API_HOST;
@@ -95,22 +64,6 @@ async function callUpstream({ dep_lat, dep_lng, arr_lat, arr_lng }) {
   }
 }
 
-/**
- * Normalise the upstream response into a clean shape that's stable for
- * our internal consumers (the Payment service, the frontend) regardless
- * of upstream changes.
- *
- * Returns:
- *   {
- *     fare:         number,         // base fare in main currency unit (e.g. 12.50)
- *     currency:     string,         // ISO code if upstream provides one
- *     distance_km:  number | null,
- *     duration_min: number | null,
- *     options: [
- *       { name, price, currency, priceInCents }
- *     ]
- *   }
- */
 function normalise(raw) {
   const journey = raw?.journey ?? {};
   const fares   = Array.isArray(raw?.fares) ? raw.fares : [];
@@ -142,9 +95,6 @@ function normalise(raw) {
   };
 }
 
-/**
- * Public API of this module - get a normalised fare estimate.
- */
 export async function getFareEstimate({ pickup, dropoff }) {
   const raw = await callUpstream({
     dep_lat: pickup.latitude,

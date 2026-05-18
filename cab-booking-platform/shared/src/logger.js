@@ -1,6 +1,5 @@
 // Tiny structured logger. Avoids pulling in a heavy dep like winston/pino
 // while still giving us timestamps and log levels.
-
 const ts = () => new Date().toISOString();
 
 export const logger = {

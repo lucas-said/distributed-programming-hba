@@ -1,0 +1,158 @@
+services:
+  - type:    web
+    name:    cab-gateway
+    runtime: node
+    plan:    free
+    region:  frankfurt
+    rootDir: services/gateway
+    buildCommand: npm install --prefix ../.. --omit=dev --workspaces --include-workspace-root
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 10000          # Render sets PORT itself; we still need it locally
+      - key: CUSTOMER_SERVICE_URL
+        sync: false
+      - key: BOOKING_SERVICE_URL
+        sync: false
+      - key: PAYMENT_SERVICE_URL
+        sync: false
+      - key: FARE_SERVICE_URL
+        sync: false
+      - key: LOCATION_SERVICE_URL
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false           # set to your Vercel URL in the dashboard
+      - key: NODE_VERSION
+        value: "20"
+  - type:    web
+    name:    cab-customer
+    runtime: node
+    plan:    free
+    region:  frankfurt
+    rootDir: services/customer
+    buildCommand: npm install --prefix ../.. --omit=dev --workspaces --include-workspace-root
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DBNAME
+        value: cab_customer
+      - key: RABBITMQ_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: NODE_VERSION
+        value: "20"
+  - type:    web
+    name:    cab-booking
+    runtime: node
+    plan:    free
+    region:  frankfurt
+    rootDir: services/booking
+    buildCommand: npm install --prefix ../.. --omit=dev --workspaces --include-workspace-root
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DBNAME
+        value: cab_booking
+      - key: RABBITMQ_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: NODE_VERSION
+        value: "20"
+  - type:    web
+    name:    cab-payment
+    runtime: node
+    plan:    free
+    region:  frankfurt
+    rootDir: services/payment
+    buildCommand: npm install --prefix ../.. --omit=dev --workspaces --include-workspace-root
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DBNAME
+        value: cab_payment
+      - key: RABBITMQ_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: BOOKING_SERVICE_URL
+        sync: false
+      - key: FARE_SERVICE_URL
+        sync: false
+      - key: DEFAULT_DISCOUNT_VALUE
+        value: "0.9"
+      - key: NODE_VERSION
+        value: "20"
+  - type:    web
+    name:    cab-fare
+    runtime: node
+    plan:    free
+    region:  frankfurt
+    rootDir: services/fare
+    buildCommand: npm install --prefix ../.. --omit=dev --workspaces --include-workspace-root
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: JWT_SECRET
+        sync: false
+      - key: TAXI_FARE_API_URL
+        value: https://taxi-fare-calculator.p.rapidapi.com
+      - key: TAXI_FARE_API_HOST
+        value: taxi-fare-calculator.p.rapidapi.com
+      - key: RAPIDAPI_KEY
+        sync: false
+      - key: NODE_VERSION
+        value: "20"
+  - type:    web
+    name:    cab-location
+    runtime: node
+    plan:    free
+    region:  frankfurt
+    rootDir: services/location
+    buildCommand: npm install --prefix ../.. --omit=dev --workspaces --include-workspace-root
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DBNAME
+        value: cab_location
+      - key: JWT_SECRET
+        sync: false
+      - key: WEATHER_API_URL
+        value: https://weatherapi-com.p.rapidapi.com
+      - key: WEATHER_API_HOST
+        value: weatherapi-com.p.rapidapi.com
+      - key: RAPIDAPI_KEY
+        sync: false
+      - key: NODE_VERSION
+        value: "20"
+  - type:    web
+    name:    cab-events
+    runtime: node
+    plan:    free
+    region:  frankfurt
+    rootDir: services/events
+    buildCommand: npm install --prefix ../.. --omit=dev --workspaces --include-workspace-root
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DBNAME
+        value: cab_events
+      - key: RABBITMQ_URL
+        sync: false
+      - key: CAB_READY_DELAY_MS
+        value: "180000"       # 3 minutes per Task 6
+      - key: DISCOUNT_VALUE
+        value: "0.9"
+      - key: NODE_VERSION
+        value: "20"

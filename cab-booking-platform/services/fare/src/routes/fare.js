@@ -5,10 +5,6 @@ import { getFareEstimate, FareApiError } from '../clients/taxiFareApi.js';
 
 const router = express.Router();
 
-/**
- * Validate a coordinate object and normalise the field names. The
- * frontend may send `{lat, lng}` or `{latitude, longitude}`. We accept both.
- */
 function validateCoord(label, raw) {
   const errors = [];
   if (!raw || typeof raw !== 'object') {
@@ -24,19 +20,6 @@ function validateCoord(label, raw) {
   return { ok: errors.length === 0, errors, value: { latitude: lat, longitude: lng } };
 }
 
-/**
- * POST /estimate
- * Auth required.
- * Body: { pickup: {latitude, longitude}, dropoff: {latitude, longitude} }
- *
- * Returns the normalised fare estimate.
- *
- * Why POST and not GET?
- *   - The body is structured (nested objects), much cleaner than
- *     four flat query params.
- *   - We may evolve the body later (passenger count, time-of-day) without
- *     breaking the URL contract.
- */
 router.post(
   '/estimate',
   asyncHandler(async (req, res) => {

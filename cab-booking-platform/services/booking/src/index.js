@@ -3,6 +3,7 @@ import express from 'express';
 import cors    from 'cors';
 
 import {
+
   connectDB,
   connectRabbit,
   authMiddleware,
@@ -16,7 +17,9 @@ const SERVICE_NAME = 'booking';
 const PORT         = process.env.PORT || 4002;
 
 const app = express();
+
 app.use(cors());
+
 app.use(express.json());
 
 // Health check (no auth)
@@ -26,9 +29,8 @@ app.get('/health', (req, res) => {
 
 // All booking routes require a valid JWT.
 const requireAuth = authMiddleware(process.env.JWT_SECRET);
-app.use('/', requireAuth, bookingRoutes);
 
-// ---- Error handler ---------------------------------------------------
+app.use('/', requireAuth, bookingRoutes);
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, _next) => {
   if (err?.name === 'ValidationError') {
@@ -44,7 +46,6 @@ app.use((err, req, res, _next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// ---- Startup ---------------------------------------------------------
 async function start() {
   try {
     if (!process.env.JWT_SECRET) {

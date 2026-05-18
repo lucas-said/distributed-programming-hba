@@ -1,13 +1,6 @@
 import mongoose from 'mongoose';
 import { logger } from './logger.js';
 
-/**
- * Connect a service to MongoDB.
- * Each microservice supplies its own dbName so services don't share collections.
- *
- * @param {string} uri    - The MongoDB connection string (mongodb+srv://...)
- * @param {string} dbName - Logical database name for this service (e.g. cab_customer)
- */
 export async function connectDB(uri, dbName) {
   if (!uri)    throw new Error('MONGODB_URI is not set');
   if (!dbName) throw new Error('MONGODB_DBNAME is not set');

@@ -1,16 +1,5 @@
 import mongoose from 'mongoose';
 
-/**
- * A user's saved pickup location (Task 4).
- *
- * Each favourite has a friendly name ("Home", "Office") plus the coordinates
- * needed to drive a fare estimate or weather lookup.
- *
- * The compound unique index on (userId, name) prevents a user from having
- * two favourites called the same thing. Different users CAN reuse names -
- * that's why it's compound, not just `name`.
- */
-
 const FavouriteSchema = new mongoose.Schema(
   {
     userId: {

@@ -1,28 +1,5 @@
 import { logger } from '@cab/shared';
 
-/**
- * Client for RapidAPI's WeatherAPI.com endpoint.
- *
- * Upstream contract:
- *   GET /forecast.json?q=<lat>,<lon>&days=1
- *     headers: X-RapidAPI-Key, X-RapidAPI-Host
- *
- *   200 response shape (subset we care about):
- *     {
- *       location: { name, country, localtime, ... },
- *       current:  {
- *         temp_c, feelslike_c, wind_kph, humidity,
- *         condition: { text, icon }
- *       },
- *       forecast: { forecastday: [
- *         { date, day: { maxtemp_c, mintemp_c, condition: { text, icon } } }
- *       ] }
- *     }
- *
- * Same isolation pattern as services/fare/src/clients/taxiFareApi.js -
- * upstream knowledge lives here, route handlers stay clean.
- */
-
 const FETCH_TIMEOUT_MS = 10_000;
 
 export class WeatherApiError extends Error {
@@ -89,20 +66,12 @@ async function callUpstream({ latitude, longitude }) {
   }
 }
 
-/**
- * Fix the icon URL. WeatherAPI returns it as a protocol-relative URL like
- * "//cdn.weatherapi.com/...". We promote it to https so frontends can use
- * it directly without breaking on file:// or http:// origins.
- */
 function fixIcon(icon) {
   if (!icon) return null;
   if (icon.startsWith('//')) return `https:${icon}`;
   return icon;
 }
 
-/**
- * Normalise the upstream payload into the stable shape our consumers use.
- */
 function normalise(raw) {
   const loc  = raw?.location ?? {};
   const cur  = raw?.current  ?? {};
