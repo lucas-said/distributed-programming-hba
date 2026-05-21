@@ -13,8 +13,6 @@ import {
 const SERVICE_NAME = 'events';
 const PORT         = process.env.PORT || 4006;
 
-// We expose only a /health endpoint - this service is a worker, not an
-// API. The gateway never routes user traffic here.
 const app = express();
 
 app.get('/health', (req, res) => {

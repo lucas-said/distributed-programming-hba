@@ -11,7 +11,6 @@ function validateFavouriteBody(body, { partial = false } = {}) {
   const errors = [];
   const out = {};
 
-  // name
   if (body.name !== undefined) {
     const n = String(body.name).trim();
     if (n.length < 1) errors.push('name must be a non-empty string');
@@ -20,12 +19,10 @@ function validateFavouriteBody(body, { partial = false } = {}) {
     errors.push('name is required');
   }
 
-  // address - optional, defaults to empty string
   if (body.address !== undefined) {
     out.address = String(body.address).trim();
   }
 
-  // latitude
   if (body.latitude !== undefined) {
     const lat = Number(body.latitude);
     if (!Number.isFinite(lat) || lat < -90 || lat > 90)
@@ -35,7 +32,6 @@ function validateFavouriteBody(body, { partial = false } = {}) {
     errors.push('latitude is required');
   }
 
-  // longitude
   if (body.longitude !== undefined) {
     const lng = Number(body.longitude);
     if (!Number.isFinite(lng) || lng < -180 || lng > 180)

@@ -7,60 +7,15 @@ import {
   logger,
 } from '@cab/shared';
 
-/**
- * Cab-ready handler (Task 6).
- *
- * Requirement: 3 minutes after a booking is created, publish a
- * notification telling the user their cab is ready, including the ride
- * details.
- *
- * Implementation: RabbitMQ TTL + Dead Letter Exchange pattern.
- *
- *   booking.created arrives
- *        |
- *        v
- *   sendToQueue(DELAY_QUEUE)
- *        |
- *        v          (no consumers - messages just sit here)
- *   [DELAY_QUEUE]
- *        |
- *        |--- TTL expires after 3 min ---
- *        v
- *   [DLX = cab.events] with routing key "cab.ready.fire"
- *        |
- *        v
- *   [FIRE_QUEUE] (bound to cab.events on cab.ready.fire)
- *        |
- *        v
- *   handleFire() -> publishEvent("notification.created", {type: "cab_ready", ...})
- *        |
- *        v
- *   Customer service stores it in the user's inbox.
- *
- * Why this pattern over setTimeout?
- *   - Survives service restarts: RabbitMQ persists the messages.
- *   - Works on free-tier hosts that sleep idle services.
- *   - The "schedule" lives in the broker, not in any one process.
- *   - Matches lecture content on AMQP topic exchanges and DLX.
- */
-
 const DELAY_QUEUE       = 'events.cabready.delay';
 const FIRE_QUEUE        = 'events.cabready.fire';
 const FIRE_ROUTING_KEY  = 'cab.ready.fire';
 
-/**
- * Set up the delay queue + fire queue + their bindings + the consumer
- * that fires the actual notification when delayed messages arrive.
- *
- * Must be called once during service startup AFTER connectRabbit.
- */
+// Delay queue holds messages until TTL expires, then dead-letters them to the fire queue.
 export async function setupCabReadyQueues(ttlMs) {
   const channel = getChannel();
   if (!channel) throw new Error('RabbitMQ channel not available');
 
-  // ---- Delay queue (the "waiting room") -------------------------------
-  // Messages sent here sit for `ttlMs` then are dead-lettered to our
-  // shared exchange with routing key `cab.ready.fire`.
   await channel.assertQueue(DELAY_QUEUE, {
     durable: true,
     arguments: {
@@ -69,9 +24,7 @@ export async function setupCabReadyQueues(ttlMs) {
       'x-dead-letter-routing-key': FIRE_ROUTING_KEY,
     },
   });
-  // NOTE: we DO NOT call channel.consume on DELAY_QUEUE - that's the whole point.
 
-  // ---- Fire queue (where expired messages land) -----------------------
   await channel.assertQueue(FIRE_QUEUE, { durable: true });
   await channel.bindQueue(FIRE_QUEUE, EXCHANGE, FIRE_ROUTING_KEY);
 
@@ -83,8 +36,6 @@ export async function setupCabReadyQueues(ttlMs) {
       channel.ack(msg);
     } catch (err) {
       logger.error('cab-ready fire handler failed:', err.message);
-      // Don't re-queue - if the booking payload is malformed, no amount of
-      // retrying will fix it. In a production system we'd send to a DLQ.
       channel.nack(msg, false, false);
     }
   });
@@ -94,10 +45,6 @@ export async function setupCabReadyQueues(ttlMs) {
   );
 }
 
-/**
- * Called when a delayed message lands in the fire queue.
- * Emits the user-facing notification with full ride details.
- */
 async function handleFire(booking) {
   if (!booking?.userId || !booking?.bookingId) {
     logger.warn('cab-ready fire received malformed booking, skipping');
@@ -125,10 +72,6 @@ async function handleFire(booking) {
   logger.info(`cab-ready notification fired for booking ${booking.bookingId}`);
 }
 
-/**
- * Subscriber that catches every booking.created and schedules it onto
- * the delay queue.
- */
 export async function startCabReadyScheduler() {
   await subscribeToEvent(
     'booking.created',
@@ -139,8 +82,6 @@ export async function startCabReadyScheduler() {
         logger.error('Cannot schedule cab-ready: no RabbitMQ channel');
         return;
       }
-      // Send to the delay queue. messageTtl on the queue applies to all
-      // messages, so we don't need to set expiration here.
       channel.sendToQueue(
         DELAY_QUEUE,
         Buffer.from(JSON.stringify(booking)),

@@ -6,7 +6,6 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 import { logger } from '@cab/shared';
 
 const PORT = process.env.PORT || 4000;
-// One entry per backend. The order matters: more specific prefixes first.
 const ROUTES = [
   { prefix: '/customer', target: process.env.CUSTOMER_SERVICE_URL || 'http://localhost:4001' },
   { prefix: '/booking',  target: process.env.BOOKING_SERVICE_URL  || 'http://localhost:4002' },
@@ -18,13 +17,9 @@ const ROUTES = [
 const app = express();
 
 app.use(cors({
-  // Bearer-token auth — no cookies — so credentials:false is correct.
-  // This means CORS_ORIGIN=* is valid for dev and a specific origin works in production.
   origin: process.env.CORS_ORIGIN || '*',
 }));
 
-// Tiny request logger so the demo video can show traffic flowing
-// through the gateway.
 app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
@@ -33,7 +28,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Gateway's own health check (does NOT proxy).
 app.get('/health', (req, res) => {
   res.json({
     service:  'gateway',
@@ -47,11 +41,9 @@ for (const { prefix, target } of ROUTES) {
     prefix,
     createProxyMiddleware({
       target,
-      changeOrigin: true,        // sets Host header to the target's host
-      pathRewrite: { [`^${prefix}`]: '' },  // strip the prefix
+      changeOrigin: true,
+      pathRewrite: { [`^${prefix}`]: '' },
       logLevel: 'warn',
-      // If the backend is down, reply with a clean 502 instead of leaking
-      // a stack trace.
       on: {
         error: (err, req, res) => {
           logger.error(`Proxy error for ${prefix}${req.url}: ${err.message}`);
@@ -68,7 +60,6 @@ for (const { prefix, target } of ROUTES) {
   logger.info(`Mounted ${prefix} -> ${target}`);
 }
 
-// 404 for anything that didn't match a routing prefix
 app.use((req, res) => {
   res.status(404).json({ error: `No route for ${req.method} ${req.originalUrl}` });
 });

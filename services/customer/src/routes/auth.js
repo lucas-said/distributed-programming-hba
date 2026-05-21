@@ -31,8 +31,6 @@ router.post(
 
     const { firstName, lastName, email, password } = values;
 
-    // Check uniqueness explicitly so we return a friendly 409 instead of a
-    // raw mongo duplicate-key error.
     const existing = await User.findOne({ email });
     if (existing) return res.status(409).json({ error: 'Email already registered' });
 
@@ -60,7 +58,6 @@ router.post(
     }
 
     const user = await User.findOne({ email });
-    // Use a generic message so we don't leak whether the email exists.
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
 
     const ok = await bcrypt.compare(password, user.passwordHash);

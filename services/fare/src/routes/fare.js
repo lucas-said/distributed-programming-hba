@@ -36,7 +36,7 @@ router.post(
         logger.warn(`FareApiError (${err.status}): ${err.message}`);
         return res.status(err.status).json({ error: err.message });
       }
-      throw err; // unknown error -> bubble to error middleware
+      throw err;
     }
   })
 );

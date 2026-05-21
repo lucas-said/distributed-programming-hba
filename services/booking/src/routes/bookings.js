@@ -37,17 +37,14 @@ function validateBookingBody(body) {
   const end   = validateLocation('endingLocation',   body.endingLocation);
   errors.push(...start.errors, ...end.errors);
 
-  // dateTime - accept ISO string or epoch ms. Reject invalid dates.
   const dt = new Date(body.dateTime);
   if (!body.dateTime || Number.isNaN(dt.getTime()))
     errors.push('dateTime is required and must be a valid date');
 
-  // Passenger count - the brief explicitly forbids > 8.
   const pax = Number(body.numberOfPassengers);
   if (!Number.isInteger(pax) || pax < 1 || pax > 8)
     errors.push('numberOfPassengers must be an integer between 1 and 8');
 
-  // Cab type - one of the three allowed values.
   if (!CAB_TYPES.includes(body.cabType))
     errors.push(`cabType must be one of: ${CAB_TYPES.join(', ')}`);
 
@@ -74,11 +71,7 @@ router.post(
       ...values,
     });
 
-    // Publish the domain event. We do this AFTER the DB write so we never
-    // emit an event for a booking that didn't actually persist.
-    // If the broker is down, the publish will throw and the request fails
-    // with a 500 - which is acceptable here because Task 6 depends on this
-    // event firing. (For a richer system you'd use the outbox pattern.)
+    // Publish only after the booking is persisted.
     if (getChannel()) {
       publishEvent('booking.created', {
         bookingId:          booking.id,

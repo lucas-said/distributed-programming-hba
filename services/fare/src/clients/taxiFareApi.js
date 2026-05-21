@@ -25,7 +25,6 @@ async function callUpstream({ dep_lat, dep_lng, arr_lat, arr_lng }) {
 
   const url = `${baseUrl}/search-geo?dep_lat=${dep_lat}&dep_lng=${dep_lng}&arr_lat=${arr_lat}&arr_lng=${arr_lng}`;
 
-  // AbortController gives us a timeout independent of TCP stack defaults.
   const controller = new AbortController();
   const timeout    = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
@@ -49,9 +48,6 @@ async function callUpstream({ dep_lat, dep_lng, arr_lat, arr_lng }) {
   }
 
   if (!res.ok) {
-    // 401/403 from upstream usually means RAPIDAPI_KEY is wrong or the
-    // subscription has lapsed. We don't leak that distinction to the user
-    // but log it so the developer sees it.
     const text = await res.text().catch(() => '');
     logger.error(`Upstream API error ${res.status}: ${text.slice(0, 200)}`);
     throw new FareApiError(`Upstream taxi fare API returned ${res.status}`, { status: 502 });
@@ -67,14 +63,11 @@ async function callUpstream({ dep_lat, dep_lng, arr_lat, arr_lng }) {
 function normalise(raw) {
   const journey = raw?.journey ?? raw ?? {};
 
-  // Fares can appear under different keys depending on the endpoint version:
-  // top-level `fares`, nested `journey.fares`, or `estimates`.
   let fares = [];
   if (Array.isArray(raw?.fares))          fares = raw.fares;
   else if (Array.isArray(journey?.fares)) fares = journey.fares;
   else if (Array.isArray(raw?.estimates)) fares = raw.estimates;
 
-  // Some responses return a single fare instead of an array.
   if (fares.length === 0) {
     const single = journey?.fare ?? journey?.estimated_fare ?? raw?.fare ?? raw?.price;
     if (single != null) fares = [{ name: 'standard', amount: single }];

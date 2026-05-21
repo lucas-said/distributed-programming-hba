@@ -19,7 +19,6 @@ router.post(
       return res.status(400).json({ error: 'bookingId is required' });
     }
 
-    // Pull the raw "Bearer ..." header so we can forward it to other services.
     const bearerToken = req.headers.authorization;
     let booking;
     try {
@@ -68,8 +67,6 @@ router.post(
         breakdown,
       });
     } catch (err) {
-      // Race condition guard - if two requests slip past the existence
-      // check and both try to insert, one of them hits the unique index.
       if (err?.code === 11000) {
         return res.status(409).json({ error: 'Booking has already been paid for' });
       }

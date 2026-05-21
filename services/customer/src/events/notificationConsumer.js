@@ -2,7 +2,6 @@ import { subscribeToEvent, logger } from '@cab/shared';
 import { Notification, NOTIFICATION_TYPES } from '../models/Notification.js';
 
 async function handleNotificationCreated(payload) {
-  // Defensive validation - we don't trust event payloads any more than HTTP bodies.
   if (!payload?.userId || !payload?.type || !payload?.title) {
     logger.warn('notification.created event missing required fields, ignoring');
     return;
@@ -24,8 +23,6 @@ async function handleNotificationCreated(payload) {
     });
     logger.info(`Notification stored for user ${payload.userId} (type=${payload.type})`);
   } catch (err) {
-    // E11000 = duplicate-key error. For dedup-protected events this is
-    // expected behaviour and we should swallow it silently.
     if (err?.code === 11000) {
       logger.info(`Duplicate notification ignored (dedupeKey=${payload.dedupeKey})`);
       return;
@@ -36,8 +33,8 @@ async function handleNotificationCreated(payload) {
 
 export async function startNotificationConsumer() {
   await subscribeToEvent(
-    'notification.created',         // routing pattern
-    'customer.notifications.queue', // durable queue name (stable across restarts)
+    'notification.created',
+    'customer.notifications.queue',
     handleNotificationCreated
   );
 }

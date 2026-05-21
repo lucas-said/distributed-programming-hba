@@ -14,12 +14,10 @@ app.use(cors());
 
 app.use(express.json());
 
-// Health check (no auth)
 app.get('/health', (req, res) => {
   res.json({ service: SERVICE_NAME, status: 'ok', time: new Date().toISOString() });
 });
 
-// All fare endpoints require a valid JWT.
 const requireAuth = authMiddleware(process.env.JWT_SECRET);
 
 app.use('/', requireAuth, fareRoutes);
@@ -37,7 +35,6 @@ async function start() {
   if (!process.env.RAPIDAPI_KEY) {
     logger.warn('RAPIDAPI_KEY not set - fare requests will fail with 503');
   }
-  // No DB, no broker - this service is stateless.
   app.listen(PORT, () => logger.info(`${SERVICE_NAME} service listening on :${PORT}`));
 }
 

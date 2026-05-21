@@ -20,7 +20,7 @@ const PaymentSchema = new mongoose.Schema(
       index:    true,
     },
     bookingId: {
-      type:     String,    // booking lives in another DB so we store as string
+      type:     String,
       required: true,
       index:    true,
     },
@@ -43,7 +43,6 @@ const PaymentSchema = new mongoose.Schema(
   }
 );
 
-// Each booking can only be paid for once.
 PaymentSchema.index({ bookingId: 1 }, { unique: true });
 
 export const Payment = mongoose.model('Payment', PaymentSchema);

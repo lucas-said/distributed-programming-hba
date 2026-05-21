@@ -13,7 +13,6 @@ export async function connectRabbit(url) {
   connection = await amqp.connect(url);
   channel    = await connection.createChannel();
 
-  // `durable: true` -> the exchange survives broker restarts.
   await channel.assertExchange(EXCHANGE, EXCHANGE_TYPE, { durable: true });
 
   connection.on('error', (err) => logger.error('RabbitMQ error:', err.message));
@@ -28,7 +27,7 @@ export function publishEvent(routingKey, payload, options = {}) {
 
   const buf = Buffer.from(JSON.stringify(payload));
   channel.publish(EXCHANGE, routingKey, buf, {
-    persistent:  true,                 // survive broker restarts
+    persistent:  true,
     contentType: 'application/json',
     timestamp:   Date.now(),
     ...options,

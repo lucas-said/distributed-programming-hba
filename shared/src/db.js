@@ -5,8 +5,6 @@ export async function connectDB(uri, dbName) {
   if (!uri)    throw new Error('MONGODB_URI is not set');
   if (!dbName) throw new Error('MONGODB_DBNAME is not set');
 
-  // Mongoose buffers commands until the connection is open, so calling
-  // connect once at startup is enough.
   await mongoose.connect(uri, { dbName });
 
   mongoose.connection.on('error', (err) =>

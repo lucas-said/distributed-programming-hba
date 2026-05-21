@@ -31,8 +31,7 @@ const NotificationSchema = new mongoose.Schema(
   }
 );
 
-// Partial unique index: only enforced when dedupeKey is a string.
-// Documents with dedupeKey: null are NOT subject to uniqueness.
+// Partial unique index applies only when dedupeKey is a string.
 NotificationSchema.index(
   { dedupeKey: 1 },
   { unique: true, partialFilterExpression: { dedupeKey: { $type: 'string' } } }

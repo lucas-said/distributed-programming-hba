@@ -22,12 +22,10 @@ app.use(cors());
 
 app.use(express.json());
 
-// Health check (no auth)
 app.get('/health', (req, res) => {
   res.json({ service: SERVICE_NAME, status: 'ok', time: new Date().toISOString() });
 });
 
-// All payment endpoints require a valid JWT.
 const requireAuth = authMiddleware(process.env.JWT_SECRET);
 
 app.use('/', requireAuth, paymentRoutes);

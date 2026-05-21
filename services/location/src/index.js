@@ -14,12 +14,10 @@ app.use(cors());
 
 app.use(express.json());
 
-// Health check (no auth)
 app.get('/health', (req, res) => {
   res.json({ service: SERVICE_NAME, status: 'ok', time: new Date().toISOString() });
 });
 
-// All other routes require a valid JWT.
 const requireAuth = authMiddleware(process.env.JWT_SECRET);
 
 app.use('/', requireAuth, favouriteRoutes);
@@ -50,7 +48,6 @@ async function start() {
 
     await connectDB(process.env.MONGODB_URI, process.env.MONGODB_DBNAME);
 
-    // No broker connection - this service is stateless on the event side.
     app.listen(PORT, () => logger.info(`${SERVICE_NAME} service listening on :${PORT}`));
   } catch (err) {
     logger.error(`${SERVICE_NAME} failed to start:`, err.message);

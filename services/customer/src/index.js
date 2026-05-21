@@ -24,23 +24,18 @@ app.use(cors());
 
 app.use(express.json());
 
-// Health check (no auth) - used by gateway and hosting platform.
 app.get('/health', (req, res) => {
   res.json({ service: SERVICE_NAME, status: 'ok', time: new Date().toISOString() });
 });
 
-// Auth routes are public.
 app.use('/auth', authRoutes);
 
-// Everything below requires a valid JWT.
 const requireAuth = authMiddleware(process.env.JWT_SECRET);
 
 app.use('/users',         requireAuth, userRoutes);
 
 app.use('/notifications', requireAuth, notificationRoutes);
 
-// Mongoose validation errors -> 400, anything else -> 500.
-// Placed AFTER routes so it catches errors forwarded by asyncHandler.
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, _next) => {
   if (err?.name === 'ValidationError') {

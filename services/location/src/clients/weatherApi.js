@@ -51,8 +51,6 @@ async function callUpstream({ latitude, longitude }) {
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     logger.error(`Upstream weather API ${res.status}: ${text.slice(0, 200)}`);
-    // 400 from WeatherAPI usually means the q value couldn't be resolved
-    // to a known location.
     if (res.status === 400) {
       throw new WeatherApiError('Could not resolve weather for given coordinates', { status: 404 });
     }
